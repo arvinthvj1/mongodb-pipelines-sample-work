@@ -1,0 +1,175 @@
+1.Find the total number of movies released each year:
+
+[
+  {
+    $group: {
+      _id: "$year",
+      count: { $sum: 1 },
+      entries: {
+        $push: {
+          title: "$title"
+        }
+      }
+    }
+  }
+]
+
+
+2.Retrieve the top 5 genres with the highest average rating:
+
+[
+  {
+    $unwind: {
+      path: "$genres"
+    }
+  },{
+    $group: {
+      _id: "$genres"
+      }
+  },
+  {
+    $sort: {
+      "tomatoes.viewer.rating": 1
+    }
+  },{
+    $limit: 5
+  }
+]
+
+
+
+3.Count the number of movies for each director and sort them in descending order:
+[
+  {
+  	$unwind: {
+   		 path: "$directors"
+  	}
+	},
+  {
+    $group: {
+      _id: "$directors",
+      count :{
+        $sum : 1
+      }
+    }
+  },
+  {
+    $sort: {
+      count: -1
+    }
+  },{
+    $limit: 5
+  }
+]
+
+4.Calculate the total runtime of movies for each language:
+[
+  {
+    $unwind: {
+      path: "$languages"
+    }
+  },
+  {
+    $group: {
+      _id: "$languages",
+      count: {
+        $sum : "$runtime"
+      }
+    }
+  }
+  
+]
+
+5.Find the movie with the highest number of awards (wins + nominations):
+[
+  {
+    $group: {
+      _id: "$title",
+      count : {
+         $sum: { 
+           $add: [
+           "$awards.wins",
+           "$awards.nominations"
+          ] 
+         }
+      }
+    }
+  },
+  {
+    $sort: {
+      count: -1
+    }
+  },{
+    $limit: 1
+  }
+]
+
+6.Find the average rating for movies released in the last 5 years:
+[
+  {
+    $group: {
+      _id: "$year",
+      averageRating : {
+        $avg: "$tomatoes.viewer.rating"
+      }
+    }
+    
+  },
+  {
+    $sort: {
+      "_id": -1
+    }
+  },
+  {
+    $limit: 5
+  }
+]
+7.Retrieve the titles and ratings of movies released in the 1900s (1900-1999):
+
+[
+  {
+    $match: {
+      year: {
+        $gte: 1900,
+        $lte: 1999
+      }
+    }
+  },
+  {
+    $project: {
+     "year": "$year",
+      "rating": "$tomatoes.viewer.rating",
+    }
+  }
+]
+8.Find the directors who have directed movies in more than one language:
+[
+  {
+    $unwind: "$directors"
+  },
+  {
+    $group: {
+      _id: "$directors",
+      languages: { $addToSet: "$languages" }
+    }
+  },
+  {
+    $project: {
+      director: "$_id",
+      numberOfLanguages: { $size: "$languages" }
+    }
+  },
+  {
+    $match: {
+      numberOfLanguages: { $gt: 1 }
+    }
+  },
+  {
+    $project: {
+      _id: 0,
+      director: 1,
+      numberOfLanguages: 1
+    }
+  }
+]
+
